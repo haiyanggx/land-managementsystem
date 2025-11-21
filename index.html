@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>土地管护台账管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2c7a5e;
+            --secondary-color: #f0f9f5;
+            --border-color: #ddd;
+            --text-color: #333;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --success-color: #27ae60;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: var(--text-color);
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* 左侧地块选择面板 */
+        .plot-selector {
+            width: 320px;
+            background-color: white;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .plot-selector-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .plot-selector-header h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .plot-selector-header h2 i {
+            font-size: 1.2em;
+        }
+        
+        .add-plot-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+        }
+        
+        .add-plot-btn:hover {
+            background-color: #23674f;
+        }
+        
+        .plot-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .plot-list {
+            list-style: none;
+        }
+        
+        .plot-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: var(--secondary-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid var(--primary-color);
+            position: relative;
+        }
+        
+        .plot-item:hover {
+            background-color: #e1f3eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .plot-item.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .plot-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .plot-location {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .plot-item.active .plot-location {
+            color: #e0e0e0;
+        }
+        
+        .delete-plot {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            font-size: 1.1em;
+            padding: 5px;
+            border-radius: 3px;
+            transition: background-color 0.3s;
+        }
+        
+        .delete-plot:hover {
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+        
+        /* 右侧内容区域 */
+        .content-area {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        /* 全景图预览区 */
+        .preview-section {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            flex: 1;
+        }
+        
+        .preview-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .image-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .image-preview {
+            width: 100%;
+            height: 400px;
+            background-color: #f9f9f9;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .image-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .no-image {
+            color: #999;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .no-image i {
+            font-size: 3em;
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+        
+        /* 地块详细信息 */
+        .details-section {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+        }
+        
+        .details-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .detail-item {
+            margin-bottom: 15px;
+        }
+        
+        .detail-label {
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .detail-value {
+            padding: 12px 15px;
+            background-color: #f9f9f9;
+            border-radius: 6px;
+            min-height: 45px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .detail-value:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .risk-high {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+        
+        .risk-medium {
+            color: var(--warning-color);
+            font-weight: bold;
+        }
+        
+        .risk-low {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+        
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 10px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .modal-title {
+            color: var(--primary-color);
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s;
+        }
+        
+        .close-btn:hover {
+            color: var(--danger-color);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(44, 122, 94, 0.2);
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .plot-selector {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+            
+            .plot-list-container {
+                max-height: 300px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .image-controls {
+                flex-wrap: wrap;
+            }
+        }
+        
+        /* 空状态样式 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+        
+        .empty-state i {
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: #ddd;
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #777;
+        }
+        
+        /* 通知样式 */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(150%);
+            transition: transform 0.3s ease-out;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background-color: var(--success-color);
+        }
+        
+        .notification.error {
+            background-color: var(--danger-color);
+        }
+        
+        .notification.info {
+            background-color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- 通知区域 -->
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notification-message">操作成功</span>
+    </div>
+    
+    <div class="container">
+        <!-- 左侧地块选择面板 -->
+        <div class="plot-selector">
+            <div class="plot-selector-header">
+                <h2><i class="fas fa-map-marked-alt"></i> 地块列表</h2>
+                <button class="add-plot-btn" id="addPlotBtn">
+                    <i class="fas fa-plus"></i> 添加新地块
+                </button>
+            </div>
+            <div class="plot-list-container">
+                <ul class="plot-list" id="plotList">
+                    <!-- 地块列表将通过JavaScript动态生成 -->
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 右侧内容区域 -->
+        <div class="content-area">
+            <!-- 全景图预览区 -->
+            <div class="preview-section">
+                <h3><i class="fas fa-image"></i> 地块全景图预览</h3>
+                <div class="image-preview" id="imagePreview">
+                    <div class="no-image">
+                        <i class="fas fa-mountain"></i>
+                        <p>暂无图片，请上传地块全景图</p>
+                    </div>
+                </div>
+                <div class="image-controls">
+                    <button class="btn btn-primary" id="uploadBtn">
+                        <i class="fas fa-upload"></i> 上传图片
+                    </button>
+                    <button class="btn btn-primary" id="downloadBtn">
+                        <i class="fas fa-download"></i> 下载图片
+                    </button>
+                    <button class="btn btn-danger" id="deleteBtn">
+                        <i class="fas fa-trash"></i> 删除图片
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 地块详细信息 -->
+            <div class="details-section">
+                <h3><i class="fas fa-info-circle"></i> 地块详细信息</h3>
+                <div class="details-grid" id="detailsGrid">
+                    <!-- 地块详细信息将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加地块模态框 -->
+    <div class="modal" id="addPlotModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-plus-circle"></i> 添加新地块</h3>
+                <button class="close-btn" id="closeAddPlotModal">&times;</button>
+            </div>
+            <form id="addPlotForm">
+                <div class="form-group">
+                    <label for="plotName">地块名称</label>
+                    <input type="text" class="form-control" id="plotName" placeholder="请输入地块名称" required>
+                </div>
+                <div class="form-group">
+                    <label for="plotLocation">地理位置</label>
+                    <input type="text" class="form-control" id="plotLocation" placeholder="请输入地理位置" required>
+                </div>
+                <div class="form-group">
+                    <label for="plotArea">地块面积(亩)</label>
+                    <input type="number" class="form-control" id="plotArea" step="0.01" placeholder="请输入地块面积" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" id="cancelAddPlot">取消</button>
+                    <button type="submit" class="btn btn-primary">添加地块</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 上传图片模态框 -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-upload"></i> 上传地块图片</h3>
+                <button class="close-btn" id="closeUploadModal">&times;</button>
+            </div>
+            <form id="uploadForm">
+                <div class="form-group">
+                    <label for="plotSelect">选择地块</label>
+                    <select class="form-control" id="plotSelect" required>
+                        <!-- 选项将通过JavaScript动态生成 -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="imageFile">选择图片</label>
+                    <input type="file" class="form-control" id="imageFile" accept="image/*" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" id="cancelUpload">取消</button>
+                    <button type="submit" class="btn btn-primary">上传</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 编辑信息模态框 -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-edit"></i> 编辑地块信息</h3>
+                <button class="close-btn" id="closeEditModal">&times;</button>
+            </div>
+            <form id="editForm">
+                <div class="form-group">
+                    <label for="editRiskLevel">风险等级</label>
+                    <select class="form-control" id="editRiskLevel" required>
+                        <option value="high">高风险</option>
+                        <option value="medium">中风险</option>
+                        <option value="low">低风险</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editLocation">地理位置</label>
+                    <input type="text" class="form-control" id="editLocation" required>
+                </div>
+                <div class="form-group">
+                    <label for="editNavigation">导航位置</label>
+                    <input type="text" class="form-control" id="editNavigation" required>
+                </div>
+                <div class="form-group">
+                    <label for="editArea">地块面积(亩)</label>
+                    <input type="number" class="form-control" id="editArea" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="editClearing">清表情况</label>
+                    <select class="form-control" id="editClearing" required>
+                        <option value="completed">已完成</option>
+                        <option value="in-progress">进行中</option>
+                        <option value="not-started">未开始</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editWater">水体情况</label>
+                    <select class="form-control" id="editWater" required>
+                        <option value="normal">正常</option>
+                        <option value="polluted">受污染</option>
+                        <option value="dry">干涸</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editFencing">围挡情况</label>
+                    <select class="form-control" id="editFencing" required>
+                        <option value="intact">完好</option>
+                        <option value="damaged">破损</option>
+                        <option value="none">无围挡</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editContact">看护联系人电话</label>
+                    <input type="tel" class="form-control" id="editContact" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" id="cancelEdit">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 模拟地块数据
+        let plotsData = [
+            {
+                id: 1,
+                name: "地块A",
+                location: "XX市XX区XX街道",
+                image: null,
+                riskLevel: "high",
+                navigation: "XX路与XX路交叉口",
+                area: 50.5,
+                clearing: "completed",
+                water: "normal",
+                fencing: "intact",
+                contact: "13800138000"
+            },
+            {
+                id: 2,
+                name: "地块B",
+                location: "XX市XX区XX街道",
+                image: null,
+                riskLevel: "medium",
+                navigation: "XX路与XX路交叉口",
+                area: 35.2,
+                clearing: "in-progress",
+                water: "polluted",
+                fencing: "damaged",
+                contact: "13900139000"
+            },
+            {
+                id: 3,
+                name: "地块C",
+                location: "XX市XX区XX街道",
+                image: null,
+                riskLevel: "low",
+                navigation: "XX路与XX路交叉口",
+                area: 78.9,
+                clearing: "not-started",
+                water: "dry",
+                fencing: "none",
+                contact: "13700137000"
+            }
+        ];
+
+        // 当前选中的地块ID
+        let currentPlotId = null;
+
+        // DOM元素
+        const plotList = document.getElementById('plotList');
+        const imagePreview = document.getElementById('imagePreview');
+        const detailsGrid = document.getElementById('detailsGrid');
+        const addPlotBtn = document.getElementById('addPlotBtn');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const deleteBtn = document.getElementById('deleteBtn');
+        const addPlotModal = document.getElementById('addPlotModal');
+        const uploadModal = document.getElementById('uploadModal');
+        const editModal = document.getElementById('editModal');
+        const closeAddPlotModal = document.getElementById('closeAddPlotModal');
+        const closeUploadModal = document.getElementById('closeUploadModal');
+        const closeEditModal = document.getElementById('closeEditModal');
+        const cancelAddPlot = document.getElementById('cancelAddPlot');
+        const cancelUpload = document.getElementById('cancelUpload');
+        const cancelEdit = document.getElementById('cancelEdit');
+        const addPlotForm = document.getElementById('addPlotForm');
+        const uploadForm = document.getElementById('uploadForm');
+        const editForm = document.getElementById('editForm');
+        const plotSelect = document.getElementById('plotSelect');
+        const imageFile = document.getElementById('imageFile');
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notification-message');
+
+        // 显示通知
+        function showNotification(message, type = 'success') {
+            notificationMessage.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // 初始化地块列表
+        function initPlotList() {
+            plotList.innerHTML = '';
+            
+            if (plotsData.length === 0) {
+                plotList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-map"></i>
+                        <h3>暂无地块数据</h3>
+                        <p>点击"添加新地块"按钮开始创建地块</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            plotsData.forEach(plot => {
+                const listItem = document.createElement('li');
+                listItem.className = 'plot-item';
+                listItem.dataset.id = plot.id;
+                
+                listItem.innerHTML = `
+                    <div class="plot-name">
+                        ${plot.name}
+                        <button class="delete-plot" data-id="${plot.id}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="plot-location">${plot.location}</div>
+                `;
+                
+                listItem.addEventListener('click', (e) => {
+                    if (!e.target.closest('.delete-plot')) {
+                        selectPlot(plot.id);
+                    }
+                });
+                
+                // 添加删除按钮事件
+                const deleteBtn = listItem.querySelector('.delete-plot');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deletePlot(plot.id);
+                });
+                
+                plotList.appendChild(listItem);
+            });
+            
+            // 默认选中第一个地块
+            if (plotsData.length > 0 && !currentPlotId) {
+                selectPlot(plotsData[0].id);
+            } else if (currentPlotId) {
+                selectPlot(currentPlotId);
+            }
+        }
+
+        // 选择地块
+        function selectPlot(plotId) {
+            currentPlotId = plotId;
+            
+            // 更新地块列表选中状态
+            document.querySelectorAll('.plot-item').forEach(item => {
+                if (parseInt(item.dataset.id) === plotId) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+            
+            // 更新预览和详细信息
+            updatePreview();
+            updateDetails();
+        }
+
+        // 更新预览区域
+        function updatePreview() {
+            const plot = plotsData.find(p => p.id === currentPlotId);
+            
+            if (plot && plot.image) {
+                imagePreview.innerHTML = `<img src="${plot.image}" alt="${plot.name}全景图">`;
+            } else {
+                imagePreview.innerHTML = `
+                    <div class="no-image">
+                        <i class="fas fa-mountain"></i>
+                        <p>暂无图片，请上传地块全景图</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 更新详细信息区域
+        function updateDetails() {
+            const plot = plotsData.find(p => p.id === currentPlotId);
+            
+            if (!plot) {
+                detailsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-info-circle"></i>
+                        <h3>暂无地块信息</h3>
+                        <p>请选择一个地块查看详细信息</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 风险等级显示样式
+            let riskClass = '';
+            let riskText = '';
+            switch(plot.riskLevel) {
+                case 'high':
+                    riskClass = 'risk-high';
+                    riskText = '高风险';
+                    break;
+                case 'medium':
+                    riskClass = 'risk-medium';
+                    riskText = '中风险';
+                    break;
+                case 'low':
+                    riskClass = 'risk-low';
+                    riskText = '低风险';
+                    break;
+            }
+            
+            // 清表情况显示
+            let clearingText = '';
+            switch(plot.clearing) {
+                case 'completed':
+                    clearingText = '已完成';
+                    break;
+                case 'in-progress':
+                    clearingText = '进行中';
+                    break;
+                case 'not-started':
+                    clearingText = '未开始';
+                    break;
+            }
+            
+            // 水体情况显示
+            let waterText = '';
+            switch(plot.water) {
+                case 'normal':
+                    waterText = '正常';
+                    break;
+                case 'polluted':
+                    waterText = '受污染';
+                    break;
+                case 'dry':
+                    waterText = '干涸';
+                    break;
+            }
+            
+            // 围挡情况显示
+            let fencingText = '';
+            switch(plot.fencing) {
+                case 'intact':
+                    fencingText = '完好';
+                    break;
+                case 'damaged':
+                    fencingText = '破损';
+                    break;
+                case 'none':
+                    fencingText = '无围挡';
+                    break;
+            }
+            
+            detailsGrid.innerHTML = `
+                <div class="detail-item">
+                    <div class="detail-label"><i class="fas fa-exclamation-triangle"></i> 风险等级</div>
+                    <div class="detail-value ${riskClass}" id="riskValue">${riskText}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label"><i class="fas fa-map-marker-alt"></i> 地理位置</div>
+                    <div class="detail-value" id="locationValue">${plot.location}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label"><i class="fas fa-directions"></i> 导航位置</div>
+                    <div class="detail-value" id="navigationValue">${plot.navigation}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label"><i class="fas fa-ruler-combined"></i> 地块面积(亩)</div>
+                    <div class="detail-value" id="areaValue">${plot.area}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label"><i class="fas fa-tree"></i> 清表情况</div>
+                    <div class="detail-value" id="clearingValue">${clearingText}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label"><i class="fas fa-tint"></i> 水体情况</div>
+                    <div class="detail-value" id="waterValue">${waterText}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label"><i class="fas fa-shield-alt"></i> 围挡情况</div>
+                    <div class="detail-value" id="fencingValue">${fencingText}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label"><i class="fas fa-phone"></i> 看护联系人电话</div>
+                    <div class="detail-value" id="contactValue">${plot.contact}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label"><i class="fas fa-cog"></i> 操作</div>
+                    <div class="detail-value">
+                        <button class="btn btn-primary" id="editBtn">
+                            <i class="fas fa-edit"></i> 编辑信息
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // 添加编辑按钮事件
+            document.getElementById('editBtn').addEventListener('click', openEditModal);
+            
+            // 添加详细信息点击编辑功能
+            document.querySelectorAll('.detail-value:not(:last-child)').forEach(item => {
+                item.addEventListener('click', openEditModal);
+            });
+        }
+
+        // 打开添加地块模态框
+        function openAddPlotModal() {
+            addPlotModal.style.display = 'flex';
+        }
+
+        // 关闭添加地块模态框
+        function closeAddPlotModalFunc() {
+            addPlotModal.style.display = 'none';
+            addPlotForm.reset();
+        }
+
+        // 打开上传图片模态框
+        function openUploadModal() {
+            // 填充地块选择下拉框
+            plotSelect.innerHTML = '';
+            plotsData.forEach(plot => {
+                const option = document.createElement('option');
+                option.value = plot.id;
+                option.textContent = plot.name;
+                plotSelect.appendChild(option);
+            });
+            
+            // 默认选中当前地块
+            if (currentPlotId) {
+                plotSelect.value = currentPlotId;
+            }
+            
+            uploadModal.style.display = 'flex';
+        }
+
+        // 关闭上传图片模态框
+        function closeUploadModalFunc() {
+            uploadModal.style.display = 'none';
+            uploadForm.reset();
+        }
+
+        // 打开编辑信息模态框
+        function openEditModal() {
+            const plot = plotsData.find(p => p.id === currentPlotId);
+            
+            if (!plot) return;
+            
+            // 填充表单数据
+            document.getElementById('editRiskLevel').value = plot.riskLevel;
+            document.getElementById('editLocation').value = plot.location;
+            document.getElementById('editNavigation').value = plot.navigation;
+            document.getElementById('editArea').value = plot.area;
+            document.getElementById('editClearing').value = plot.clearing;
+            document.getElementById('editWater').value = plot.water;
+            document.getElementById('editFencing').value = plot.fencing;
+            document.getElementById('editContact').value = plot.contact;
+            
+            editModal.style.display = 'flex';
+        }
+
+        // 关闭编辑信息模态框
+        function closeEditModalFunc() {
+            editModal.style.display = 'none';
+        }
+
+        // 添加新地块
+        function addPlot(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('plotName').value;
+            const location = document.getElementById('plotLocation').value;
+            const area = parseFloat(document.getElementById('plotArea').value);
+            
+            // 生成新地块ID
+            const newId = plotsData.length > 0 ? Math.max(...plotsData.map(p => p.id)) + 1 : 1;
+            
+            // 创建新地块
+            const newPlot = {
+                id: newId,
+                name,
+                location,
+                area,
+                image: null,
+                riskLevel: "medium",
+                navigation: "待填写",
+                clearing: "not-started",
+                water: "normal",
+                fencing: "none",
+                contact: "待填写"
+            };
+            
+            plotsData.push(newPlot);
+            
+            // 更新UI
+            initPlotList();
+            selectPlot(newId);
+            
+            showNotification(`地块 "${name}" 添加成功`);
+            closeAddPlotModalFunc();
+        }
+
+        // 删除地块
+        function deletePlot(plotId) {
+            const plot = plotsData.find(p => p.id === plotId);
+            
+            if (!plot) return;
+            
+            if (confirm(`确定要删除地块 "${plot.name}" 吗？此操作不可撤销。`)) {
+                // 从数据中移除
+                plotsData = plotsData.filter(p => p.id !== plotId);
+                
+                // 如果删除的是当前选中的地块，清除选中状态
+                if (currentPlotId === plotId) {
+                    currentPlotId = null;
+                }
+                
+                // 更新UI
+                initPlotList();
+                
+                // 如果还有地块，选中第一个
+                if (plotsData.length > 0) {
+                    selectPlot(plotsData[0].id);
+                } else {
+                    updatePreview();
+                    updateDetails();
+                }
+                
+                showNotification(`地块 "${plot.name}" 已删除`, 'info');
+            }
+        }
+
+        // 上传图片
+        function uploadImage(e) {
+            e.preventDefault();
+            
+            const plotId = parseInt(plotSelect.value);
+            const file = imageFile.files[0];
+            
+            if (!file) {
+                showNotification('请选择要上传的图片', 'error');
+                return;
+            }
+            
+            // 在实际应用中，这里应该将图片上传到服务器
+            // 这里我们使用FileReader来模拟上传过程
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const plot = plotsData.find(p => p.id === plotId);
+                if (plot) {
+                    plot.image = e.target.result;
+                    
+                    // 如果当前选中了上传的地块，更新预览
+                    if (currentPlotId === plotId) {
+                        updatePreview();
+                    }
+                    
+                    showNotification('图片上传成功！');
+                    closeUploadModalFunc();
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 下载图片
+        function downloadImage() {
+            const plot = plotsData.find(p => p.id === currentPlotId);
+            
+            if (!plot || !plot.image) {
+                showNotification('当前地块没有可下载的图片', 'error');
+                return;
+            }
+            
+            // 创建一个临时链接进行下载
+            const link = document.createElement('a');
+            link.href = plot.image;
+            link.download = `${plot.name}_全景图.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('图片下载成功');
+        }
+
+        // 删除图片
+        function deleteImage() {
+            const plot = plotsData.find(p => p.id === currentPlotId);
+            
+            if (!plot || !plot.image) {
+                showNotification('当前地块没有图片可删除', 'error');
+                return;
+            }
+            
+            if (confirm('确定要删除这张图片吗？')) {
+                plot.image = null;
+                updatePreview();
+                showNotification('图片已删除', 'info');
+            }
+        }
+
+        // 保存编辑信息
+        function saveEditInfo(e) {
+            e.preventDefault();
+            
+            const plot = plotsData.find(p => p.id === currentPlotId);
+            
+            if (!plot) return;
+            
+            // 更新地块信息
+            plot.riskLevel = document.getElementById('editRiskLevel').value;
+            plot.location = document.getElementById('editLocation').value;
+            plot.navigation = document.getElementById('editNavigation').value;
+            plot.area = parseFloat(document.getElementById('editArea').value);
+            plot.clearing = document.getElementById('editClearing').value;
+            plot.water = document.getElementById('editWater').value;
+            plot.fencing = document.getElementById('editFencing').value;
+            plot.contact = document.getElementById('editContact').value;
+            
+            // 更新显示
+            updateDetails();
+            
+            showNotification('地块信息更新成功！');
+            closeEditModalFunc();
+        }
+
+        // 初始化事件监听
+        function initEventListeners() {
+            addPlotBtn.addEventListener('click', openAddPlotModal);
+            uploadBtn.addEventListener('click', openUploadModal);
+            downloadBtn.addEventListener('click', downloadImage);
+            deleteBtn.addEventListener('click', deleteImage);
+            
+            closeAddPlotModal.addEventListener('click', closeAddPlotModalFunc);
+            closeUploadModal.addEventListener('click', closeUploadModalFunc);
+            closeEditModal.addEventListener('click', closeEditModalFunc);
+            cancelAddPlot.addEventListener('click', closeAddPlotModalFunc);
+            cancelUpload.addEventListener('click', closeUploadModalFunc);
+            cancelEdit.addEventListener('click', closeEditModalFunc);
+            
+            addPlotForm.addEventListener('submit', addPlot);
+            uploadForm.addEventListener('submit', uploadImage);
+            editForm.addEventListener('submit', saveEditInfo);
+            
+            // 点击模态框外部关闭模态框
+            window.addEventListener('click', (e) => {
+                if (e.target === addPlotModal) {
+                    closeAddPlotModalFunc();
+                }
+                if (e.target === uploadModal) {
+                    closeUploadModalFunc();
+                }
+                if (e.target === editModal) {
+                    closeEditModalFunc();
+                }
+            });
+        }
+
+        // 初始化应用
+        function initApp() {
+            initPlotList();
+            initEventListeners();
+        }
+
+        // 当页面加载完成后初始化应用
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
